@@ -8,7 +8,6 @@ Xaero 世界地图显示 PNG；Xaero 小地图使用规则中的 `symbol` 文字
 
 将 `examples/datapacks/structure_map_icons` 整个文件夹放进世界的 `datapacks`，执行 `/reload`。
 构建还会生成可直接安装的 `build/distributions/structure_map_icons_example.zip`，也可以将该 ZIP 放入 `datapacks`。
-在 `wuhanhao456/Teleport-Waypoint` 的 `main` 分支提交更新后，GitHub Actions 会先构建和测试，再自动发布包含 JAR 和示例 ZIP 的 Release。也可手动运行 Build 工作流。发布任务只允许在该 fork 中运行。
 该示例将村庄的小地图符号设为 `V`，将试炼密室的世界地图图标设为试炼钥匙、小地图符号设为 `T`。
 村庄的两张 PNG 是模组原有水晶图片的副本，用来演示服务器分发；替换它们即可使用自己的建筑图片。
 修改或删除规则、替换 PNG 后再次执行 `/reload`。客户端会自动收到更新，不需要另外安装资源包。

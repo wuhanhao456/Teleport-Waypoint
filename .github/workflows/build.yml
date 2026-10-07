@@ -1,12 +1,6 @@
 name: Build
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: read
+on: [push, pull_request]
 
 jobs:
   build:
@@ -34,69 +28,3 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
-
-      - name: Upload mod and example datapack
-        uses: actions/upload-artifact@v4
-        with:
-          name: teleportwaypoint-build
-          path: |
-            build/libs/*.jar
-            build/distributions/*.zip
-          if-no-files-found: error
-
-  release:
-    # Publish only this user's fork. Other forks and the upstream cannot enter this job.
-    if: github.repository == 'wuhanhao456/Teleport-Waypoint' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    concurrency:
-      group: teleportwaypoint-release
-      cancel-in-progress: false
-    steps:
-      - name: Download successful build
-        uses: actions/download-artifact@v4
-        with:
-          name: teleportwaypoint-build
-          path: release-assets
-
-      - name: Publish JAR and example datapack
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const { owner, repo } = context.repo;
-            const files = fs.readdirSync('release-assets', { recursive: true })
-              .filter(file => /\.(jar|zip)$/.test(file))
-              .map(file => path.join('release-assets', file));
-            const jar = files.find(file => path.basename(file).startsWith('teleportwaypoint-') && file.endsWith('.jar'));
-            if (!jar) throw new Error('No Teleport Waypoint JAR in build artifacts');
-            const version = path.basename(jar, '.jar').replace('teleportwaypoint-', '');
-            const tag = `map-icons-${context.sha}`;
-            let release;
-            try {
-              release = (await github.rest.repos.getReleaseByTag({ owner, repo, tag })).data;
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              release = (await github.rest.repos.createRelease({
-                owner, repo, tag_name: tag, target_commitish: context.sha,
-                name: `Teleport Waypoint ${version} — Map Icons`,
-                body: 'Data-driven world-map icons: structure IDs/tags, waypoint IDs/names, dimensions and types. PNGs can be included in server datapacks and synchronized to clients. Minimap markers support custom text symbols.\n\nInstall this fork on both server and client. Put the example ZIP in the world datapacks folder and run /reload. See docs/map-icons.md for configuration.\n\nBuilt and tested by GitHub Actions.',
-                draft: false, prerelease: false, make_latest: 'true'
-              })).data;
-            }
-            const existing = await github.paginate(github.rest.repos.listReleaseAssets, {
-              owner, repo, release_id: release.id
-            });
-            for (const file of files) {
-              const name = path.basename(file);
-              if (existing.some(asset => asset.name === name)) continue;
-              const bytes = fs.readFileSync(file);
-              await github.rest.repos.uploadReleaseAsset({
-                owner, repo, release_id: release.id, name, data: bytes,
-                headers: { 'content-type': 'application/octet-stream', 'content-length': bytes.length }
-              });
-            }
-            await core.summary.addLink('Download latest JAR and datapack', release.html_url).write();
