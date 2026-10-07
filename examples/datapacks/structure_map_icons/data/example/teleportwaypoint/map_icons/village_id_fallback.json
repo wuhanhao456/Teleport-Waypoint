@@ -1,0 +1,7 @@
+{
+  "priority": 90,
+  "match": {"waypoint_ids": "village"},
+  "active_icon": {"png": "example:teleportwaypoint/icons/village_active.png"},
+  "inactive_icon": {"png": "example:teleportwaypoint/icons/village_inactive.png"},
+  "symbol": "V"
+}

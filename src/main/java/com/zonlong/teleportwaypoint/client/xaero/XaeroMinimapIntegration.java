@@ -312,7 +312,8 @@ public final class XaeroMinimapIntegration {
                 } else {
                     color = info.pocket() ? WaypointColor.YELLOW : WaypointColor.RED;
                 }
-                String symbol = info.pocket() ? "P" : "W";
+                String symbol = info.iconStyle().symbol().isEmpty()
+                        ? (info.pocket() ? "P" : "W") : info.iconStyle().symbol();
                 // Pocket waypoints use their literal name; regular waypoints use the raw
                 // translation key so Xaero can localize them in the current client language.
                 String displayName = info.pocket() ? info.name() : "teleportwaypoint.waypoint." + info.name();

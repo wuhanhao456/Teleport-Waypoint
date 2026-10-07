@@ -2,6 +2,7 @@ package com.zonlong.teleportwaypoint;
 
 import com.zonlong.teleportwaypoint.block.entity.ModBlockEntities;
 import com.zonlong.teleportwaypoint.client.ClientWaypointState;
+import com.zonlong.teleportwaypoint.client.ClientMapIcons;
 import com.zonlong.teleportwaypoint.client.XaeroIntegrationLoader;
 import com.zonlong.teleportwaypoint.client.gui.RenamePocketWaypointScreen;
 import com.zonlong.teleportwaypoint.client.gui.RenameWaypointScreen;
@@ -19,6 +20,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
@@ -33,6 +35,8 @@ public class TeleportWaypointClient {
         modEventBus.addListener(TeleportWaypointClient::onRegisterMenuScreens);
         modEventBus.addListener(TeleportWaypointClient::onRegisterEntityRenderers);
         modEventBus.addListener(TeleportWaypointClient::onRegisterAdditionalModels);
+        modEventBus.addListener((RegisterClientReloadListenersEvent event) -> event.registerReloadListener(
+                (net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> ClientMapIcons.clearResourceCache()));
 
         NeoForge.EVENT_BUS.addListener(TeleportWaypointClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(TeleportWaypointClient::onClientLoggingOut);
@@ -44,6 +48,7 @@ public class TeleportWaypointClient {
 
     private static void onClientLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientWaypointState.reset();
+        ClientMapIcons.reset();
         XaeroIntegrationLoader.reset();
     }
 

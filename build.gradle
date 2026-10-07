@@ -110,6 +110,10 @@ neoForge {
             sourceSet(sourceSets.main)
         }
     }
+    unitTest {
+        enable()
+        testedMod = mods.getByName(mod_id)
+    }
 }
 
 // Sets up a dependency configuration called 'localRuntime'.
@@ -167,6 +171,9 @@ def extractXaeroLib = tasks.register('extractXaeroLib', ExtractXaeroLibTask) {
 }
 
 dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
     // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
@@ -200,6 +207,19 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
+}
+
+def exampleMapIconsZip = tasks.register('exampleMapIconsZip', Zip) {
+    from 'examples/datapacks/structure_map_icons'
+    archiveFileName = 'structure_map_icons_example.zip'
+    destinationDirectory = layout.buildDirectory.dir('distributions')
+}
+tasks.named('build').configure {
+    dependsOn exampleMapIconsZip
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

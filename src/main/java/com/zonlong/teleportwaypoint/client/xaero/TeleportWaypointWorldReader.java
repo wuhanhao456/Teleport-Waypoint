@@ -18,9 +18,9 @@ import xaero.map.gui.dropdown.rightclick.RightClickOption;
 public class TeleportWaypointWorldReader
         extends ElementReader<TeleportWaypointElement, TeleportWaypointContext, TeleportWaypointWorldRenderer> {
 
-    private static final int ICON_HALF = 16;
-    private static final int BOX_TOP = -16;
-    private static final int BOX_BOTTOM = 16;
+    private static int size(TeleportWaypointElement element) {
+        return TeleportWaypointWorldRenderer.iconSize(element);
+    }
 
     @Override
     public boolean isHidden(TeleportWaypointElement element, TeleportWaypointContext context) {
@@ -44,42 +44,42 @@ public class TeleportWaypointWorldReader
 
     @Override
     public int getInteractionBoxLeft(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return -ICON_HALF;
+        return -size(element) / 2;
     }
 
     @Override
     public int getInteractionBoxRight(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return ICON_HALF;
+        return size(element) - size(element) / 2;
     }
 
     @Override
     public int getInteractionBoxTop(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return BOX_TOP;
+        return -size(element) / 2;
     }
 
     @Override
     public int getInteractionBoxBottom(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return BOX_BOTTOM;
+        return size(element) - size(element) / 2;
     }
 
     @Override
     public int getRenderBoxLeft(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return -ICON_HALF;
+        return -size(element) / 2;
     }
 
     @Override
     public int getRenderBoxRight(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return ICON_HALF;
+        return size(element) - size(element) / 2;
     }
 
     @Override
     public int getRenderBoxTop(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return BOX_TOP;
+        return -size(element) / 2;
     }
 
     @Override
     public int getRenderBoxBottom(TeleportWaypointElement element, TeleportWaypointContext context, float partialTicks) {
-        return BOX_BOTTOM;
+        return size(element) - size(element) / 2;
     }
 
     @Override

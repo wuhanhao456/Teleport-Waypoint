@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import com.zonlong.teleportwaypoint.network.MapIconStyle;
 
 /**
  * Client-side representation of a waypoint known to the server, activated or not.
@@ -15,7 +16,8 @@ public record ClientWaypointInfo(
         ResourceKey<Level> dimension,
         BlockPos pos,
         boolean pocket,
-        String name
+        String name,
+        MapIconStyle iconStyle
 ) {
     /**
      * Returns the display name: pocket waypoints use their literal name, regular

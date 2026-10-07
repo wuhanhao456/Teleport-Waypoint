@@ -2,6 +2,7 @@ package com.zonlong.teleportwaypoint.network;
 
 import com.zonlong.teleportwaypoint.block.entity.WaypointBlockEntity;
 import com.zonlong.teleportwaypoint.client.ClientWaypointState;
+import com.zonlong.teleportwaypoint.client.ClientMapIcons;
 import com.zonlong.teleportwaypoint.core.WaypointManager;
 import com.zonlong.teleportwaypoint.core.WaypointTeleporter;
 
@@ -14,7 +15,10 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public class ModNetwork {
 
     public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("4");
+        final PayloadRegistrar registrar = event.registrar("5");
+
+        registrar.playToClient(SyncMapIconImagePayload.TYPE, SyncMapIconImagePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> ClientMapIcons.apply(payload)));
 
         registrar.playToClient(
                 SyncActivatedWaypointsPayload.TYPE,

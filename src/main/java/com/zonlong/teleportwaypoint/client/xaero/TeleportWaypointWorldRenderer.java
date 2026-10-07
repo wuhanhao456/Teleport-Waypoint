@@ -1,6 +1,7 @@
 package com.zonlong.teleportwaypoint.client.xaero;
 
 import com.zonlong.teleportwaypoint.TeleportWaypoint;
+import com.zonlong.teleportwaypoint.client.ClientMapIcons;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,6 +32,12 @@ public class TeleportWaypointWorldRenderer
             TeleportWaypoint.MODID, "textures/gui/pocket_waypoint_active.png");
     private static final ResourceLocation POCKET_WAYPOINT_INACTIVE = ResourceLocation.fromNamespaceAndPath(
             TeleportWaypoint.MODID, "textures/gui/pocket_waypoint_inactive.png");
+
+    static int iconSize(TeleportWaypointElement element) {
+        var style = element.info().iconStyle();
+        return ClientMapIcons.resolve(element.activated() ? style.active() : style.inactive()) == null
+                ? ICON_SIZE : Math.max(8, Math.min(64, style.size()));
+    }
 
     public TeleportWaypointWorldRenderer(
             TeleportWaypointContext context,
@@ -87,8 +94,12 @@ public class TeleportWaypointWorldRenderer
         } else {
             texture = element.pocket() ? POCKET_WAYPOINT_ACTIVE : WAYPOINT_ACTIVE;
         }
-        int half = ICON_SIZE / 2;
-        guiGraphics.blit(texture, -half, -half, 0.0F, 0.0F, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        var style = element.info().iconStyle();
+        ResourceLocation custom = ClientMapIcons.resolve(element.activated() ? style.active() : style.inactive());
+        int size = custom == null ? ICON_SIZE : Math.max(8, Math.min(64, style.size()));
+        if (custom != null) texture = custom;
+        int half = size / 2;
+        guiGraphics.blit(texture, -half, -half, 0.0F, 0.0F, size, size, size, size);
         return true;
     }
 

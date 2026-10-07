@@ -19,6 +19,9 @@ import com.zonlong.teleportwaypoint.network.WaypointSyncInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import com.zonlong.teleportwaypoint.datapack.MapIconData;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -50,8 +53,10 @@ public class WaypointManager {
         } else {
             name = WaypointBlockEntity.isValidId(be.getId()) ? be.getId() : "empty";
         }
-        WaypointRecord record = new WaypointRecord(uid, serverLevel.dimension(), be.getBlockPos(), be.isPocketWaypoint(), name);
         WaypointRecord existing = registry.get(uid).orElse(null);
+        List<ResourceLocation> structures = identifyStructures(serverLevel, be);
+        WaypointRecord record = new WaypointRecord(uid, serverLevel.dimension(), be.getBlockPos(),
+                be.isPocketWaypoint(), name, structures);
         if (existing == null) {
             registry.put(record);
             broadcastAdd(serverLevel.getServer(), record);
@@ -100,7 +105,7 @@ public class WaypointManager {
                 .ifPresent(record -> {
                     PacketDistributor.sendToPlayer(player, new ActivatedWaypointAddPayload(toActivatedInfo(record)));
                     if (record.pocket() && record.dimension().equals(player.level().dimension())) {
-                        PacketDistributor.sendToPlayer(player, new AddWaypointPayload(toSyncInfo(record)));
+                        PacketDistributor.sendToPlayer(player, new AddWaypointPayload(toSyncInfo(player.getServer(), record)));
                     }
                 });
 
@@ -223,7 +228,7 @@ public class WaypointManager {
             if (record.pocket() && !activated.contains(record.uid())) {
                 continue;
             }
-            infos.add(toSyncInfo(record));
+            infos.add(toSyncInfo(server, record));
         }
 
         int pageSize = SyncDimensionWaypointsPayload.MAX_PAGE_SIZE;
@@ -266,7 +271,7 @@ public class WaypointManager {
     }
 
     private static void broadcastAdd(MinecraftServer server, WaypointRecord record) {
-        WaypointSyncInfo info = toSyncInfo(record);
+        WaypointSyncInfo info = toSyncInfo(server, record);
         for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
             if (record.pocket()) {
                 // Pocket waypoints are only sent to players who activated them and are in the same dimension.
@@ -282,7 +287,7 @@ public class WaypointManager {
     }
 
     private static void broadcastUpdate(MinecraftServer server, WaypointRecord record) {
-        WaypointSyncInfo info = toSyncInfo(record);
+        WaypointSyncInfo info = toSyncInfo(server, record);
         ActivatedWaypointInfo activatedInfo = toActivatedInfo(record);
         for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
             boolean activated = isActivated(onlinePlayer, record.uid());
@@ -323,17 +328,27 @@ public class WaypointManager {
         }
     }
 
-    private static WaypointSyncInfo toSyncInfo(WaypointRecord record) {
+    private static WaypointSyncInfo toSyncInfo(MinecraftServer server, WaypointRecord record) {
         return new WaypointSyncInfo(
                 record.uid(),
                 record.dimension().location(),
                 record.pos(),
                 record.pocket(),
-                record.name());
+                record.name(), MapIconData.resolve(server, record));
     }
 
     private static ActivatedWaypointInfo toActivatedInfo(WaypointRecord record) {
         return new ActivatedWaypointInfo(record.uid(), record.pocket(), record.name());
+    }
+
+    /** Detect structure registry keys once when registering, never during map rendering. */
+    private static List<ResourceLocation> identifyStructures(ServerLevel level, WaypointBlockEntity be) {
+        if (be.getStructureId() != null) return List.of(be.getStructureId());
+        var registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        return level.structureManager().getAllStructuresAt(be.getBlockPos()).keySet().stream()
+                .filter(structure -> level.structureManager().getStructureAt(be.getBlockPos(), structure).isValid())
+                .map(registry::getKey).filter(java.util.Objects::nonNull)
+                .sorted().limit(32).toList();
     }
 
     private static UUID ensureUniqueUid(WaypointBlockEntity be, WaypointRegistryData registry, ServerLevel level) {

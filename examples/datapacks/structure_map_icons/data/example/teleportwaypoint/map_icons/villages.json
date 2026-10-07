@@ -1,0 +1,11 @@
+{
+  "priority": 100,
+  "match": {
+    "structure_tags": "minecraft:village",
+    "pocket": false
+  },
+  "active_icon": {"png": "example:teleportwaypoint/icons/village_active.png"},
+  "inactive_icon": {"png": "example:teleportwaypoint/icons/village_inactive.png"},
+  "size": 32,
+  "symbol": "V"
+}

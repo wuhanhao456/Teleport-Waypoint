@@ -263,7 +263,7 @@ public final class ClientWaypointState {
                 ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, info.dimension()),
                 info.pos(),
                 info.pocket(),
-                info.name());
+                info.name(), info.iconStyle());
     }
 
     private static void flushPending() {

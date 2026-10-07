@@ -14,6 +14,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -77,6 +78,9 @@ public class WaypointRegistryData extends SavedData {
             entry.putLong("pos", record.pos().asLong());
             entry.putBoolean("pocket", record.pocket());
             entry.putString("name", record.name());
+            ListTag structures = new ListTag();
+            record.structures().forEach(id -> structures.add(StringTag.valueOf(id.toString())));
+            entry.put("structures", structures);
             list.add(entry);
         }
         tag.put(TAG_WAYPOINTS, list);
@@ -95,7 +99,13 @@ public class WaypointRegistryData extends SavedData {
                 BlockPos pos = BlockPos.of(entry.getLong("pos"));
                 boolean pocket = entry.getBoolean("pocket");
                 String name = entry.getString("name");
-                data.waypoints.put(uid, new WaypointRecord(uid, dimension, pos, pocket, name));
+                var structures = new java.util.ArrayList<ResourceLocation>();
+                ListTag storedStructures = entry.getList("structures", Tag.TAG_STRING);
+                for (int j = 0; j < storedStructures.size() && j < 32; j++) {
+                    ResourceLocation structure = ResourceLocation.tryParse(storedStructures.getString(j));
+                    if (structure != null) structures.add(structure);
+                }
+                data.waypoints.put(uid, new WaypointRecord(uid, dimension, pos, pocket, name, structures));
             } catch (Exception e) {
                 TeleportWaypoint.LOGGER.warn("[TeleportWaypoint] Skipping invalid waypoint registry entry at index {}", i, e);
             }

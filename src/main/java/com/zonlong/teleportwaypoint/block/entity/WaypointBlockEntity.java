@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -39,6 +40,12 @@ public class WaypointBlockEntity extends BlockEntity {
     private String id = "empty";
     private String name = "";
     private UUID owner;
+    // Optional override for template authors or waypoints outside a structure's bounding box.
+    private ResourceLocation structureId;
+
+    public ResourceLocation getStructureId() {
+        return structureId;
+    }
 
     public WaypointBlockEntity(BlockPos pos, BlockState blockState) {
         super(ModBlockEntities.WAYPOINT.get(), pos, blockState);
@@ -176,6 +183,7 @@ public class WaypointBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        if (structureId != null) tag.putString("structure_id", structureId.toString());
         if (uid != null) {
             tag.put(TAG_UID, NbtUtils.createUUID(uid));
         }
@@ -196,6 +204,7 @@ public class WaypointBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        structureId = ResourceLocation.tryParse(tag.getString("structure_id"));
         if (tag.contains(TAG_UID, Tag.TAG_INT_ARRAY)) {
             uid = NbtUtils.loadUUID(tag.get(TAG_UID));
         }

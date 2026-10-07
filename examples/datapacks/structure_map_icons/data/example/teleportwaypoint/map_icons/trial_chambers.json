@@ -1,0 +1,7 @@
+{
+  "priority": 100,
+  "match": {"structures": "minecraft:trial_chambers", "pocket": false},
+  "icon": {"texture": "minecraft:textures/item/trial_key.png"},
+  "size": 32,
+  "symbol": "T"
+}

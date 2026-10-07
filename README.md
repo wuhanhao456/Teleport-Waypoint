@@ -3,7 +3,7 @@
 一个 Minecraft **1.21.1 NeoForge** 模组：在世界上放置锚点，右键激活后，即可在任意已激活的锚点之间传送，支持跨维度。
 
 - **Mod ID：** `teleportwaypoint`
-- **版本：** `0.3.0`
+- **版本：** `0.3.1`
 - **加载器：** NeoForge `21.1.236+`
 - **游戏版本：** Minecraft `1.21.1`
 - **许可：** MIT
@@ -31,6 +31,7 @@
 - **交互优化**：右键未解锁锚点仅激活（提示 + 经验球音效），不弹 GUI；已解锁后右键才打开传送列表
 - NeoForge 配置界面入口：分通用 / Xaero 小地图 / Xaero 世界地图三组配置
 - **Xaero 地图联动**：小地图与世界地图显示锚点，并严格按当前维度隔离
+- **数据包地图图标**：世界地图按结构注册名、结构标签、锚点 ID、名称、维度和类型选择 PNG；服务器可直接分发数据包图片；小地图支持自定义文字符号。见 [图标配置说明](docs/map-icons.md) 和 [示例数据包](examples/datapacks/structure_map_icons)。客户端和服务端均需此 fork。
 
 ---
 
@@ -133,7 +134,7 @@
 ```bash
 # 构建（Windows 使用 gradlew.bat）
 ./gradlew build
-# 产物位于 build/libs/teleportwaypoint-0.2.0.jar
+# 产物位于 build/libs/teleportwaypoint-0.3.1.jar
 
 # 启动开发客户端
 ./gradlew runClient
