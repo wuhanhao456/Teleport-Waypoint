@@ -3,7 +3,7 @@
 一个 Minecraft **1.21.1 NeoForge** 模组：在世界上放置锚点，右键激活后，即可在任意已激活的锚点之间传送，支持跨维度。
 
 - **Mod ID：** `teleportwaypoint`
-- **版本：** `0.3.1`
+- **版本：** `0.3.2`
 - **加载器：** NeoForge `21.1.236+`
 - **游戏版本：** Minecraft `1.21.1`
 - **许可：** MIT
@@ -134,7 +134,7 @@
 ```bash
 # 构建（Windows 使用 gradlew.bat）
 ./gradlew build
-# 产物位于 build/libs/teleportwaypoint-0.3.1.jar
+# 产物位于 build/libs/teleportwaypoint-0.3.2.jar
 
 # 启动开发客户端
 ./gradlew runClient

@@ -15,6 +15,8 @@ import com.zonlong.teleportwaypoint.network.SyncActivatedWaypointsPayload;
 import com.zonlong.teleportwaypoint.network.SyncDimensionWaypointsPayload;
 import com.zonlong.teleportwaypoint.network.UpdateWaypointPayload;
 import com.zonlong.teleportwaypoint.network.WaypointSyncInfo;
+import com.zonlong.teleportwaypoint.network.ModNetwork;
+import com.zonlong.teleportwaypoint.network.SyncMapIconStylesPayload;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -105,7 +107,8 @@ public class WaypointManager {
                 .ifPresent(record -> {
                     PacketDistributor.sendToPlayer(player, new ActivatedWaypointAddPayload(toActivatedInfo(record)));
                     if (record.pocket() && record.dimension().equals(player.level().dimension())) {
-                        PacketDistributor.sendToPlayer(player, new AddWaypointPayload(toSyncInfo(player.getServer(), record)));
+                        PacketDistributor.sendToPlayer(player, new AddWaypointPayload(toSyncInfo(record)));
+                        sendIconStyle(player, record);
                     }
                 });
 
@@ -219,6 +222,8 @@ public class WaypointManager {
             return;
         }
         List<WaypointSyncInfo> infos = new ArrayList<>();
+        boolean iconsSupported = ModNetwork.supportsMapIcons(player);
+        List<SyncMapIconStylesPayload.Entry> styles = new ArrayList<>();
         WaypointRegistryData registry = WaypointRegistryData.get(server);
         Set<UUID> activated = getActivated(player);
         for (WaypointRecord record : registry.getAll()) {
@@ -228,7 +233,8 @@ public class WaypointManager {
             if (record.pocket() && !activated.contains(record.uid())) {
                 continue;
             }
-            infos.add(toSyncInfo(server, record));
+            infos.add(toSyncInfo(record));
+            if (iconsSupported) styles.add(toIconStyle(server, record));
         }
 
         int pageSize = SyncDimensionWaypointsPayload.MAX_PAGE_SIZE;
@@ -240,6 +246,10 @@ public class WaypointManager {
             List<WaypointSyncInfo> pageEntries = infos.subList(from, to);
             PacketDistributor.sendToPlayer(player,
                     new SyncDimensionWaypointsPayload(dimension.location(), pageEntries, page, page == pages - 1));
+            if (iconsSupported && from < to) {
+                PacketDistributor.sendToPlayer(player,
+                        new SyncMapIconStylesPayload(dimension.location(), styles.subList(from, to)));
+            }
         }
     }
 
@@ -271,23 +281,25 @@ public class WaypointManager {
     }
 
     private static void broadcastAdd(MinecraftServer server, WaypointRecord record) {
-        WaypointSyncInfo info = toSyncInfo(server, record);
+        WaypointSyncInfo info = toSyncInfo(record);
         for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
             if (record.pocket()) {
                 // Pocket waypoints are only sent to players who activated them and are in the same dimension.
                 if (onlinePlayer.level().dimension().equals(record.dimension())
                         && isActivated(onlinePlayer, record.uid())) {
                     PacketDistributor.sendToPlayer(onlinePlayer, new AddWaypointPayload(info));
+                    sendIconStyle(onlinePlayer, record);
                 }
             } else if (onlinePlayer.level().dimension().equals(record.dimension())) {
                 // Normal waypoints are fully synced per dimension.
                 PacketDistributor.sendToPlayer(onlinePlayer, new AddWaypointPayload(info));
+                sendIconStyle(onlinePlayer, record);
             }
         }
     }
 
     private static void broadcastUpdate(MinecraftServer server, WaypointRecord record) {
-        WaypointSyncInfo info = toSyncInfo(server, record);
+        WaypointSyncInfo info = toSyncInfo(record);
         ActivatedWaypointInfo activatedInfo = toActivatedInfo(record);
         for (ServerPlayer onlinePlayer : server.getPlayerList().getPlayers()) {
             boolean activated = isActivated(onlinePlayer, record.uid());
@@ -297,11 +309,13 @@ public class WaypointManager {
                 // other dimensions only need the metadata/name update.
                 if (activated && sameDimension) {
                     PacketDistributor.sendToPlayer(onlinePlayer, new UpdateWaypointPayload(info));
+                    sendIconStyle(onlinePlayer, record);
                 } else if (activated) {
                     PacketDistributor.sendToPlayer(onlinePlayer, new ActivatedWaypointAddPayload(activatedInfo));
                 }
             } else if (sameDimension) {
                 PacketDistributor.sendToPlayer(onlinePlayer, new UpdateWaypointPayload(info));
+                sendIconStyle(onlinePlayer, record);
             } else if (activated) {
                 // Normal waypoint names are also used by the cross-dimension teleport list.
                 PacketDistributor.sendToPlayer(onlinePlayer, new ActivatedWaypointAddPayload(activatedInfo));
@@ -328,13 +342,23 @@ public class WaypointManager {
         }
     }
 
-    private static WaypointSyncInfo toSyncInfo(MinecraftServer server, WaypointRecord record) {
+    private static WaypointSyncInfo toSyncInfo(WaypointRecord record) {
         return new WaypointSyncInfo(
                 record.uid(),
                 record.dimension().location(),
                 record.pos(),
                 record.pocket(),
-                record.name(), MapIconData.resolve(server, record));
+                record.name());
+    }
+
+    private static SyncMapIconStylesPayload.Entry toIconStyle(MinecraftServer server, WaypointRecord record) {
+        return new SyncMapIconStylesPayload.Entry(record.uid(), MapIconData.resolve(server, record));
+    }
+
+    private static void sendIconStyle(ServerPlayer player, WaypointRecord record) {
+        if (!ModNetwork.supportsMapIcons(player)) return;
+        PacketDistributor.sendToPlayer(player, new SyncMapIconStylesPayload(record.dimension().location(),
+                List.of(toIconStyle(player.getServer(), record))));
     }
 
     private static ActivatedWaypointInfo toActivatedInfo(WaypointRecord record) {

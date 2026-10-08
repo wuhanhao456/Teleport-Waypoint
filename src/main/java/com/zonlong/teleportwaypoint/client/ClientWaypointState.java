@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import com.zonlong.teleportwaypoint.network.ActivatedWaypointInfo;
 import com.zonlong.teleportwaypoint.network.WaypointSyncInfo;
+import com.zonlong.teleportwaypoint.network.MapIconStyle;
+import com.zonlong.teleportwaypoint.network.SyncMapIconStylesPayload;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -131,6 +133,28 @@ public final class ClientWaypointState {
             activated = List.copyOf(list);
         }
         revision++;
+    }
+
+    /** Styles can arrive between snapshot pages; apply them only after the base snapshot is complete. */
+    public static void applyIconStyles(ResourceLocation dimension, List<SyncMapIconStylesPayload.Entry> styles) {
+        if (!initialized) {
+            pending.add(() -> applyIconStyles(dimension, styles));
+            return;
+        }
+        if (!ResourceKey.create(Registries.DIMENSION, dimension).equals(currentDimension)) return;
+        Map<UUID, ClientWaypointInfo> map = new HashMap<>(waypoints);
+        boolean changed = false;
+        for (var entry : styles) {
+            ClientWaypointInfo info = map.get(entry.uid());
+            if (info == null || info.iconStyle().equals(entry.style())) continue;
+            map.put(entry.uid(), new ClientWaypointInfo(info.uid(), info.dimension(), info.pos(),
+                    info.pocket(), info.name(), entry.style()));
+            changed = true;
+        }
+        if (changed) {
+            waypoints = Map.copyOf(map);
+            revision++;
+        }
     }
 
     public static void applyRemove(UUID uid) {
@@ -263,7 +287,7 @@ public final class ClientWaypointState {
                 ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, info.dimension()),
                 info.pos(),
                 info.pocket(),
-                info.name(), info.iconStyle());
+                info.name(), MapIconStyle.DEFAULT);
     }
 
     private static void flushPending() {

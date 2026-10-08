@@ -11,14 +11,20 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 public class ModNetwork {
 
     public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar("5");
+        final PayloadRegistrar registrar = event.registrar("4");
 
-        registrar.playToClient(SyncMapIconImagePayload.TYPE, SyncMapIconImagePayload.STREAM_CODEC,
+        // Missing icon channels must not prevent a protocol-4 client/server from joining.
+        final PayloadRegistrar icons = event.registrar("map-icons-1").optional();
+        icons.playToClient(SyncMapIconImagePayload.TYPE, SyncMapIconImagePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientMapIcons.apply(payload)));
+        icons.playToClient(SyncMapIconStylesPayload.TYPE, SyncMapIconStylesPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() ->
+                        ClientWaypointState.applyIconStyles(payload.dimension(), payload.styles())));
 
         registrar.playToClient(
                 SyncActivatedWaypointsPayload.TYPE,
@@ -79,6 +85,12 @@ public class ModNetwork {
                 DeleteWaypointPayload.TYPE,
                 DeleteWaypointPayload.STREAM_CODEC,
                 ModNetwork::handleDelete);
+    }
+
+    /** Never send extension packets to an original client that did not negotiate them. */
+    public static boolean supportsMapIcons(ServerPlayer player) {
+        return NetworkRegistry.hasChannel(player.connection, SyncMapIconImagePayload.TYPE.id())
+                && NetworkRegistry.hasChannel(player.connection, SyncMapIconStylesPayload.TYPE.id());
     }
 
     private static void handleSyncActivated(final SyncActivatedWaypointsPayload payload, final IPayloadContext context) {

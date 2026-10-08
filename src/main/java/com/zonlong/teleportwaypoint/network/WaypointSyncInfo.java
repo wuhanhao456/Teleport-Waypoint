@@ -13,8 +13,9 @@ import net.minecraft.resources.ResourceLocation;
  * {@link SyncDimensionWaypointsPayload} and incremental waypoint payloads so
  * Xaero map integrations can render waypoints.
  */
-public record WaypointSyncInfo(UUID uid, ResourceLocation dimension, BlockPos pos, boolean pocket, String name,
-                               MapIconStyle iconStyle) {
+// Keep these five fields byte-compatible with the original protocol 4.
+// Map icon styles are synchronized separately through an optional payload.
+public record WaypointSyncInfo(UUID uid, ResourceLocation dimension, BlockPos pos, boolean pocket, String name) {
     public static final StreamCodec<RegistryFriendlyByteBuf, WaypointSyncInfo> STREAM_CODEC =
             StreamCodec.composite(
                     net.minecraft.core.UUIDUtil.STREAM_CODEC, WaypointSyncInfo::uid,
@@ -22,6 +23,5 @@ public record WaypointSyncInfo(UUID uid, ResourceLocation dimension, BlockPos po
                     BlockPos.STREAM_CODEC, WaypointSyncInfo::pos,
                     ByteBufCodecs.BOOL, WaypointSyncInfo::pocket,
                     ByteBufCodecs.STRING_UTF8, WaypointSyncInfo::name,
-                    MapIconStyle.STREAM_CODEC, WaypointSyncInfo::iconStyle,
                     WaypointSyncInfo::new);
 }

@@ -14,6 +14,7 @@ import com.zonlong.teleportwaypoint.TeleportWaypoint;
 import com.zonlong.teleportwaypoint.core.WaypointManager;
 import com.zonlong.teleportwaypoint.core.WaypointRecord;
 import com.zonlong.teleportwaypoint.network.MapIconStyle;
+import com.zonlong.teleportwaypoint.network.ModNetwork;
 import com.zonlong.teleportwaypoint.network.SyncMapIconImagePayload;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -120,6 +121,7 @@ public final class MapIconData extends SimpleJsonResourceReloadListener {
     }
 
     private static void syncImages(ServerPlayer player) {
+        if (!ModNetwork.supportsMapIcons(player)) return;
         PacketDistributor.sendToPlayer(player, new SyncMapIconImagePayload(true,
                 ResourceLocation.fromNamespaceAndPath(TeleportWaypoint.MODID, "reset"), new byte[0]));
         if (current != null) {
